@@ -93,9 +93,9 @@ def get_platform_config(platform=None):
     if platform is None:
         platform = sys.platform
     platform_config = None
-    for plat in SUPPORTED_PLATFORMS:
-        if platform.startswith(plat):
-            platform_config = SUPPORTED_PLATFORMS[plat]
+    for plat_name, plat_config in SUPPORTED_PLATFORMS.items():
+        if platform.startswith(plat_name):
+            platform_config = plat_config
             break
     if platform_config is None:
         raise ValueError(
@@ -122,7 +122,7 @@ def write_systemd_config(service_config, filename,
     if output_path is None:
         output_path = platform_config.install_path
     output_path = Path(output_path)
-    os.makedirs(output_path.parent, mode=0o755, exist_ok=True)
+    os.makedirs(output_path, mode=0o755, exist_ok=True)
     with open(output_path / filename, "w",
               encoding="utf-8", newline="\n") as service_file:
         service_config.write(service_file)
@@ -131,9 +131,15 @@ def write_systemd_config(service_config, filename,
     return output_path
 
 
-def install_service(service_settings, service_filename,
-                    services_enable=None, services_disable=None,
-                    platform=None, verbose=None):
+def install_service(
+        service_settings,
+        service_filename,
+        services_enable=None,
+        services_disable=None,
+        platform=None,
+        output_path=None,
+        verbose=None,
+        ):
     """
     Install a service with the given settings to the given filename.
 
@@ -150,17 +156,21 @@ def install_service(service_settings, service_filename,
         including any extension. The default is None.
     services_enable : list-like, optional
         Services to manually enable along with this one. The default is None.
-    services_disable : TYPE, optional
+    services_disable : list-like, optional
         Services to manually disable along with this one. The default is None.
     platform : str, optional
         Platform to install the service on. Currently, only ``linux`` suported.
         By default, will be detected automatically.
+    output_path : pathlib.Path or str, optional
+        The path to which to write the generated service.
+        By default, will be the standard location for the selected platform.
     verbose : bool, optional
         Whether to print verbose log output. By default, prints nothing.
 
     Returns
     -------
-    None.
+    pathlib.Path
+        The output path to which the service file was written.
 
     """
     log_setup(verbose)
@@ -177,7 +187,11 @@ def install_service(service_settings, service_filename,
     logging.debug("Writing service configuration file to %s",
                   platform_config.install_path / service_filename)
     output_path = write_systemd_config(
-        service_config, service_filename, platform)
+        service_config,
+        service_filename,
+        platform=platform,
+        output_path=output_path,
+        )
 
     logging.debug("Reloading systemd daemon...")
     subprocess.run(
@@ -195,3 +209,5 @@ def install_service(service_settings, service_filename,
 
     logging.info("Successfully installed %s service to %s",
                  service_filename, output_path)
+
+    return output_path
