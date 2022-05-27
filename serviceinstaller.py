@@ -116,8 +116,8 @@ def generate_systemd_config(config_dict, platform=None):
     return service_config
 
 
-def write_systemd_config(service_config, filename,
-                         platform=None, output_path=None):
+def write_systemd_config(
+        service_config, filename, platform=None, output_path=None):
     platform_config = get_platform_config(platform)
     if output_path is None:
         output_path = platform_config.install_path
@@ -127,7 +127,12 @@ def write_systemd_config(service_config, filename,
               encoding="utf-8", newline="\n") as service_file:
         service_config.write(service_file)
     os.chmod(output_path, 0o644)
-    os.chown(output_path, 0, 0)  # pylint: disable=no-member
+    try:
+        os.chown(output_path, 0, 0)  # pylint: disable=no-member
+    except AttributeError:
+        logging.warning(
+            "Could not change owner of service file to root; "
+            "chown not supported on this system.")
     return output_path
 
 
@@ -138,6 +143,7 @@ def install_service(
         services_disable=None,
         platform=None,
         output_path=None,
+        skip_enable=False,
         verbose=None,
         ):
     """
@@ -164,6 +170,9 @@ def install_service(
     output_path : pathlib.Path or str, optional
         The path to which to write the generated service.
         By default, will be the standard location for the selected platform.
+    skip_enable : bool, optional
+        Skip enabling/disabling services, just generate/write the service file.
+        Useful for testing purposes on non-native systems.
     verbose : bool, optional
         Whether to print verbose log output. By default, prints nothing.
 
@@ -178,14 +187,19 @@ def install_service(
         services_enable = []
     if services_disable is None:
         services_disable = []
+    if output_path is not None:
+        output_path = Path(output_path)
 
     logging.debug("Installing %s service...", service_filename)
     platform_config = get_platform_config(platform)
     logging.debug("Using platform config settings: %s", platform_config)
     logging.debug("Generating service configuration file...")
     service_config = generate_systemd_config(service_settings, platform)
-    logging.debug("Writing service configuration file to %s",
-                  platform_config.install_path / service_filename)
+
+
+    logging.debug(
+        "Writing service configuration file to %s",
+        (output_path or platform_config.install_path) / service_filename)
     output_path = write_systemd_config(
         service_config,
         service_filename,
@@ -193,19 +207,30 @@ def install_service(
         output_path=output_path,
         )
 
-    logging.debug("Reloading systemd daemon...")
-    subprocess.run(
-        ("systemctl", "daemon-reload"), timeout=COMMAND_TIMEOUT, check=True)
+    if not skip_enable:
 
-    for service in services_disable:
-        logging.debug("Disabling %s (if enabled)...", service)
-        subprocess.run(("systemctl", "disable", service),
-                       timeout=COMMAND_TIMEOUT, check=False)
+        logging.debug("Reloading systemd daemon...")
+        subprocess.run(
+            ["systemctl", "daemon-reload"],
+            timeout=COMMAND_TIMEOUT,
+            check=True,
+            )
 
-    for service in (*services_enable, service_filename):
-        logging.debug("Enabling %s...", service)
-        subprocess.run(("systemctl", "enable", service),
-                       timeout=COMMAND_TIMEOUT, check=True)
+        for service in services_disable:
+            logging.debug("Disabling %s (if enabled)...", service)
+            subprocess.run(
+                ["systemctl", "disable", service],
+                timeout=COMMAND_TIMEOUT,
+                check=False,
+                )
+
+        for service in [*services_enable, service_filename]:
+            logging.debug("Enabling %s...", service)
+            subprocess.run(
+                ["systemctl", "enable", service],
+                timeout=COMMAND_TIMEOUT,
+                check=True,
+                )
 
     logging.info("Successfully installed %s service to %s",
                  service_filename, output_path)
