@@ -125,7 +125,7 @@ def write_systemd_config(
 
     os.chmod(output_file_path, 0o644)
     try:
-        os.chown(output_file_path, 0, 0)  # pylint: disable=no-member
+        os.chown(output_file_path, 0, 0)
     except PermissionError:
         logging.warning(
             "Warning: Could not change owner of service file to root due to "
