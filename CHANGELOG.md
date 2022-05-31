@@ -1,4 +1,35 @@
-# ServiceInstaller Changelog
+# Serviceinstaller Changelog
+
+
+## Version 0.2.0 (2022-06-03)
+
+Stable release supporting Python 3.6-3.10.
+
+### Core features
+
+* Allow execution on non-native platforms with the skip_enable parameter
+* Add output_path parameter to main function to set a custom output dir
+* Return actual output path for consumption by callers
+* Defer logging configuration to callers rather than handling it internally
+
+### Bug fixes
+
+* Fix bug creating parent directories one level too shallow
+* Fix bug setting permissions/owner on parent directory, not service file
+* Handle permission error with chown and being unsupported on current platform
+
+### Infrastructure
+
+* Officially document support for Python 3.6-3.10 (up from only 3.6-3.8)
+* Modernize packaging infrastructure for PEP 517 w/pyproject.toml & setup.cfg
+* Revise Readme to reflect version support and other improvements
+
+### Under the hood
+
+* Update pylint config with suite of plugins and remove unneeded disable
+* Update Release Guide to use more modern and robust procedure
+* Further minor related refactoring
+
 
 
 ## Version 0.1.4 (2022-05-31)

@@ -43,7 +43,7 @@ def get_actual_username():
 
 
 # --- Module level constants ---
-__version__ = "0.2.0.dev0"
+__version__ = "0.2.0"
 
 PlatformConfig = collections.namedtuple(
     "PlatformConfig",
