@@ -1,11 +1,19 @@
 # ServiceInstaller Changelog
 
 
+## Version 0.1.4 (2022-05-31)
+
+Bugfix release to fix a critical packaging issue:
+
+* Ensure the actual Python module is included in distribution packages
+
+
+
 ## Version 0.1.3 (2020-04-23)
 
-Bugfix release to fix various issues:
+Bugfix release to address one minor issue:
 
-* Fix issue with timeout being set too short for low-end systems (eg RPi Zero)
+* Fix issue with timeout being set too short for low-end systems (e.g. Pi Zero)
 
 
 

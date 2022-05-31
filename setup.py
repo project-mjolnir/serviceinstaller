@@ -35,7 +35,7 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     keywords="systemd service linux unit installer",
     url="https://github.com/CAM-Gerlach/serviceinstaller",
-    packages=setuptools.find_packages(),
+    py_modules=["serviceinstaller"],
     python_requires=">=3.6",
     install_requires=[],
     classifiers=[
