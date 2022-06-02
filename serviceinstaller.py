@@ -19,16 +19,6 @@ COMMAND_TIMEOUT = 60
 
 
 # --- Utility functions ---
-def log_setup(verbose=None):
-    if verbose is None:
-        logging_level = 99
-    elif verbose:
-        logging_level = "DEBUG"
-    else:
-        logging_level = "INFO"
-    logging.basicConfig(stream=sys.stdout, level=logging_level)
-
-
 def update_dict_recursive(base, update):
     for update_key, update_value in update.items():
         base_value = base.get(update_key, {})
@@ -138,13 +128,13 @@ def write_systemd_config(
         os.chown(output_file_path, 0, 0)  # pylint: disable=no-member
     except PermissionError:
         logging.warning(
-            "Could not change owner of service file to root; "
+            "Warning: Could not change owner of service file to root due to "
             "insufficient permissions (needs sudo).")
         logging.debug("Error details:", exc_info=True)
     except AttributeError:
         logging.warning(
-            "Could not change owner of service file to root; "
-            "chown not supported on this system.")
+            "Warning: Could not change owner of service file to root because "
+            "chown is not supported on this operating system.")
         logging.debug("Error details:", exc_info=True)
 
     return output_path
@@ -158,7 +148,6 @@ def install_service(
         platform=None,
         output_path=None,
         skip_enable=False,
-        verbose=None,
         ):
     """
     Install a service with the given settings to the given filename.
@@ -187,8 +176,6 @@ def install_service(
     skip_enable : bool, optional
         Skip enabling/disabling services, just generate/write the service file.
         Useful for testing purposes on non-native systems.
-    verbose : bool, optional
-        Whether to print verbose log output. By default, prints nothing.
 
     Returns
     -------
@@ -196,7 +183,6 @@ def install_service(
         The output path to which the service file was written.
 
     """
-    log_setup(verbose)
     if services_enable is None:
         services_enable = []
     if services_disable is None:
