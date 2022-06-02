@@ -117,22 +117,36 @@ def generate_systemd_config(config_dict, platform=None):
 
 
 def write_systemd_config(
-        service_config, filename, platform=None, output_path=None):
+        service_config,
+        filename,
+        platform=None,
+        output_path=None,
+        ):
     platform_config = get_platform_config(platform)
     if output_path is None:
         output_path = platform_config.install_path
     output_path = Path(output_path)
     os.makedirs(output_path, mode=0o755, exist_ok=True)
-    with open(output_path / filename, "w",
+    output_file_path = output_path / filename
+
+    with open(output_file_path, mode="w",
               encoding="utf-8", newline="\n") as service_file:
         service_config.write(service_file)
-    os.chmod(output_path, 0o644)
+
+    os.chmod(output_file_path, 0o644)
     try:
-        os.chown(output_path, 0, 0)  # pylint: disable=no-member
+        os.chown(output_file_path, 0, 0)  # pylint: disable=no-member
+    except PermissionError:
+        logging.warning(
+            "Could not change owner of service file to root; "
+            "insufficient permissions (needs sudo).")
+        logging.debug("Error details:", exc_info=True)
     except AttributeError:
         logging.warning(
             "Could not change owner of service file to root; "
             "chown not supported on this system.")
+        logging.debug("Error details:", exc_info=True)
+
     return output_path
 
 
